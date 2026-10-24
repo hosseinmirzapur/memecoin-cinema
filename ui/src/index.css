@@ -1,30 +1,30 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* One dark terminal. Signal colours mean verdicts only: mint = enter, coral = pass, amber = hold. */
+/* Order ticket on graphite. Ink is the only accent; signal colours mean verdicts only: mint = enter, coral = pass, amber = hold. */
 :root {
-  --background: #07080a;
-  --foreground: #e9ecf1;
-  --card: #0d0f13;
-  --card-foreground: #e9ecf1;
-  --popover: #12151b;
-  --popover-foreground: #e9ecf1;
-  --primary: #e9ecf1;
-  --primary-foreground: #07080a;
-  --secondary: #151920;
-  --secondary-foreground: #e9ecf1;
-  --muted: #11141a;
-  --muted-foreground: #7c8594;
-  --accent: #5ce1ff;
-  --accent-foreground: #07080a;
-  --destructive: #ff4d6d;
-  --border: #1d232d;
-  --input: #1d232d;
-  --ring: #5ce1ff;
-  --ape: #2ee59d;
-  --reject: #ff4d6d;
-  --wait: #ffb020;
-  --radius: 0.75rem;
+  --background: #0e0f0d;
+  --foreground: #ece9e2;
+  --card: #131411;
+  --card-foreground: #ece9e2;
+  --popover: #1a1b18;
+  --popover-foreground: #ece9e2;
+  --primary: #ece9e2;
+  --primary-foreground: #0e0f0d;
+  --secondary: #1c1d1a;
+  --secondary-foreground: #ece9e2;
+  --muted: #161714;
+  --muted-foreground: #9a968b;
+  --accent: #ece9e2;
+  --accent-foreground: #0e0f0d;
+  --destructive: #ff6b5b;
+  --border: #2a2b26;
+  --input: #2a2b26;
+  --ring: #ece9e2;
+  --ape: #3fd38a;
+  --reject: #ff6b5b;
+  --wait: #f2b33d;
+  --radius: 0.375rem;
   color-scheme: dark;
 }
 
@@ -50,12 +50,12 @@
   --color-ape: var(--ape);
   --color-reject: var(--reject);
   --color-wait: var(--wait);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-display: "Unbounded", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 
@@ -63,13 +63,12 @@
   * { @apply border-border outline-ring/50; }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image:
-      radial-gradient(60% 40% at 50% -10%, rgb(92 225 255 / 0.10), transparent 70%),
-      radial-gradient(40% 30% at 100% 0%, rgb(46 229 157 / 0.06), transparent 70%);
-    background-attachment: fixed;
   }
   button, input { font: inherit; color: inherit; }
   button:not(:disabled), [role="button"] { cursor: pointer; }
+  /* Figures line up in columns: tabular numerals everywhere, not only on the ticket. */
+  body { font-variant-numeric: tabular-nums; }
+  ::selection { background: var(--foreground); color: var(--background); }
 }
 
 @media (prefers-reduced-motion: reduce) {

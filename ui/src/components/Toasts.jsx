@@ -13,7 +13,7 @@ export default function Toasts({ toasts }) {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="rounded-xl border border-wait/40 bg-card/95 p-3 shadow-lg backdrop-blur"
+            className="rounded-md border border-border bg-card p-3"
           >
             <p className="font-mono text-[10px] tracking-widest text-wait uppercase">{t.kicker}</p>
             <p className="font-display text-sm font-semibold">{t.title}</p>
