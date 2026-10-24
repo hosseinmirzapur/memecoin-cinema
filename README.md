@@ -219,6 +219,7 @@ Every stage is a pure function over JSON except the two I/O edges, `gmgn_data.py
 | Node.js 22 LTS or newer | Builds the React desk with Vite |
 | `gmgn-cli` on `PATH`, authenticated | Every data source. Verify with `make config` |
 | Kilo API key (optional) | Enables the scoring agent. Without it, GMGN data still shows |
+| Docker Engine and Compose v2.24+ (optional) | Runs the desk as a container instead of on the host |
 | Blender on `PATH` (optional) | Only needed to regenerate 3D assets with `make assets` |
 
 ### Run it
@@ -236,6 +237,23 @@ make ui          # installs npm deps, builds the React app, starts the server
 Open **http://127.0.0.1:8765** and paste a contract address.
 
 Change the port with `make ui PORT=9000`.
+
+### 🐳 Docker
+
+```bash
+make docker-up      # docker compose up -d --build, serves on http://127.0.0.1:8765
+make docker-logs    # follow the container logs
+make docker-down    # stop and remove the deployment
+```
+
+Credentials stay outside the image. `.env` supplies `KILO_API_KEY`, and `~/.config/gmgn` is mounted read-only so `gmgn-cli` finds its keys (set `GMGN_CONFIG_DIR` to use another folder). `DESK_PORT` changes the host port.
+
+| Hardening | Setting |
+|---|---|
+| Build | Multi-stage: Node builds the desk; runtime is `node:22-bookworm-slim` with Python 3 and `gmgn-cli` 1.5.0 |
+| Runtime | uid 1000, read-only root, writable `/tmp` only (`noexec`), `cap_drop: ALL`, `no-new-privileges`, `init` |
+| Network | Port on `127.0.0.1` only; the Host-header guard still applies |
+| Limits and health | 512 MB memory, 256 processes, logs rotated at 10 MB × 3; `HEALTHCHECK` probes `/api/rules`, which uses no quota |
 
 ---
 
@@ -257,9 +275,8 @@ Make variables: `PY` (interpreter, default `python3`) and `PORT` (control-panel 
 
 | Limit | Value | Reason |
 |---|---|---|
+| GMGN pacing | One call at a time, 2 s between starts | A burst previously triggered `RATE_LIMIT_BANNED` |
 | GMGN call timeout | 45 s | Stops a hung `gmgn-cli` from stalling the scan |
-| GMGN spacing | 2 s between call starts | Stays under GMGN's leaky-bucket limit |
-| GMGN concurrency | 1 | A burst previously triggered `RATE_LIMIT_BANNED` |
 | Fallback ban wait | 300 s | Used when GMGN reports a limit without a reset time |
 | Agent request timeout | 90 s | Bounds one scoring call |
 | Agent data cap | 12,000 characters | Keeps the prompt small and predictable |
@@ -270,13 +287,9 @@ Make variables: `PY` (interpreter, default `python3`) and `PORT` (control-panel 
 ## 🖥️ Using the desk
 
 - **Scan.** Choose a chain (`sol`, `bsc`, `base`, or `eth`), paste the address, and press scan. Reels develop as sources answer.
-- **Paste detection.** Paste any text containing a contract address and the desk finds it.
 - **Holder report.** Runs the GMGN holder-analysis script for an address on `auto`, `sol`, `bsc`, `base`, or `eth`, in English or Chinese.
 - **Rules.** The `agents.md` rubric is served at `/api/rules`, so the page and the decision logic share one source.
-- **Health checks.** `/api/config` runs `gmgn-cli config --check`. `/api/tests` runs the unit suite.
 - **Sound.** Optional 8-bit cues for scan events. Off until you switch it on; the choice is remembered in the browser.
-
-Addresses are checked before any network call. Solana addresses are base58 with 32 to 44 characters. BSC, Base, and Ethereum addresses are `0x` plus exactly 40 hex characters.
 
 ---
 
@@ -298,11 +311,12 @@ python3 .agents/skills/gmgn-holder-analysis/analyze.py <address> <chain|auto> en
 | Target | What it does |
 |---|---|
 | `make ui` | Build the desk, then start the control panel |
-| `make ui-build` | Install npm dependencies on first run, then build only |
 | `make assets` | Rebuild the five relic models in `ui/public/models` via Blender |
 | `make test` | Run the unit suite (`unittest`, verbose) |
 | `make check` | Compile every script, then run the suite |
 | `make config` | Show `gmgn-cli config --check` |
+| `make docker-build` | Build the container image |
+| `make docker-up` / `docker-down` / `docker-logs` | Start, stop, or follow the Docker deployment |
 
 ---
 
@@ -330,8 +344,6 @@ The control panel only accepts requests with a `127.0.0.1` or `localhost` Host h
 | `source` | Each GMGN call completes | `name`, `ok`, `ms`, `error`, short `preview` |
 | `agent` | Scoring starts, then ends | `status` (`start`, `ok`, `error`), `model`, `error` |
 | `done` | Verdict is final | The full result object |
-
-Bad input is answered before any event with `400` and `{"error": "..."}`.
 
 ### Example
 
@@ -364,8 +376,6 @@ Rookie (0) → Scout (3) → Analyst (8) → Alpha Hunter (20) → Oracle (50)
 | 🐋 **Whale Watcher** | Finding one wallet holding over 10% of supply |
 | 🧰 **Chest Hoarder** | Opening ten chests |
 
-The intro reel plays once per browser session and is skipped entirely under reduced-motion settings.
-
 ---
 
 ## 🔐 Security model
@@ -375,10 +385,9 @@ The intro reel plays once per browser session and is skipped entirely under redu
 | Network exposure | Server binds to `127.0.0.1` only. |
 | DNS rebinding | Host header must be `127.0.0.1` or `localhost`. |
 | Cross-site requests | Every `POST` requires `X-Ui: 1`. |
-| Bad input | Addresses validated per chain before any external call. |
+| Bad input | Addresses validated per chain (Solana base58 32–44 chars; EVM `0x` + 40 hex) before any external call. Bad input gets `400` before any stream event. |
 | Command injection | Subprocesses run with argument lists, never through a shell. |
 | Prompt injection | GMGN data is wrapped in a `<data>` block that the prompt marks as untrusted. Closing tags inside the data are escaped. The prompt forbids following instructions found in data. |
-| Runaway calls | Timeouts on every external call. GMGN calls are serialized and honor cooldowns. |
 | Secrets | `.env` is gitignored. The API key is read from the environment and never written into results or responses. Recovery phrases are never requested. |
 | Money movement | No wallet, signing, or order code exists in the repository. |
 
@@ -395,7 +404,7 @@ make check      # compile all scripts, then run 30 tests
 | `tests/test_scripts.py` | Address validation for both chain families, the holder CLI's bad-input and failure paths, and report generation |
 | `tests/test_research.py` | Kline edge cases such as zero-price candles, holder concentration rules, honeypot string handling, address matching, and a stubbed end-to-end run covering event order, GMGN outage handling, honeypot capping, and missing-key behavior |
 
-The desk is checked by `npm run build`. Browser-level UI tests do not exist yet; see the roadmap.
+The desk is checked by `npm run build`. Run the suite in the image: `docker run --rm memecoin-cinema:latest python3 -m unittest discover -s tests`.
 
 ---
 
@@ -404,12 +413,12 @@ The desk is checked by `npm run build`. Browser-level UI tests do not exist yet;
 ```text
 memecoin-cinema/
 ├── agents.md                    # Research rules: pipeline, rubric, sizing, output format
-├── Makefile                     # ui · ui-build · assets · test · check · config
-├── docs/
-│   ├── index.md                 # Workspace status and iteration log
-│   └── skill-iterations/        # Design notes for skill revisions
+├── Dockerfile                   # Multi-stage image: UI build, then hardened runtime
+├── docker-compose.yml           # Loopback-bound, read-only deployment
+├── .dockerignore                # Keeps secrets, caches and build inputs out of the image
+├── Makefile                     # ui · assets · test · check · config · docker-*
+├── docs/                        # Workspace status and iteration log
 ├── transcripts/                 # Operator source material behind the rules
-├── skills-lock.json             # Source and content hash of each installed GMGN skill
 ├── scripts/
 │   ├── ui_server.py             # Localhost HTTP server and SSE streaming
 │   ├── research.py              # Pipeline: gather, signals, agent, guards, decide
@@ -418,11 +427,8 @@ memecoin-cinema/
 │   ├── kilo_agent.py            # Scoring agent client and strict verdict parser
 │   ├── validate_address.py      # Solana and EVM address validation
 │   ├── fast_review.py           # Quick markdown review
-│   └── blender/
-│       ├── build_quest_assets.py  # Generates the five GLB relics
-│       └── render_reels.py        # Renders looping backdrops for the reels
+│   └── blender/                 # Relic models and reel backdrop generators
 ├── .agents/skills/              # GMGN skills and the holder-analysis script
-├── .claude/skills/              # Symlinks into .agents/skills
 ├── tests/                       # unittest suite (30 tests)
 └── ui/
     ├── src/
@@ -444,7 +450,6 @@ memecoin-cinema/
 - **One GMGN call at a time.** A parallel burst tripped GMGN's rate limiter on a live run and banned the IP. Serial calls with spacing cost seconds, not reliability.
 - **Guards live in code, not in the prompt.** A model can be argued into `APE`. A conditional cannot. Hard stops are deterministic and tested.
 - **The model sees facts, not raw dumps.** Signals are computed first and capped at 12,000 characters.
-- **Standard library on the server.** No web framework means a small attack surface and nothing to upgrade. SSE needs only threads and a flush.
 - **Browser storage is cosmetic only.** Progress and the intro flag are conveniences. Anything that matters comes from the server, and storage failures never break the page.
 - **Stream, don't wait.** Each source appears when it lands, so a slow scan still shows progress.
 - **Free-tier default model.** Keeps cost low. Verdicts can vary, so the guards carry the hard cases and the parser rejects malformed output.
@@ -459,16 +464,13 @@ memecoin-cinema/
 - Charts use 15-minute candles only. Short-lived launches may show little structure.
 - Agent verdicts depend on the chosen model and can drift between runs. Treat the score as advisory and the guards as authoritative.
 - The rules in `agents.md` come from operator transcripts. They are not backtested or statistically validated.
-- No automated browser tests for the React desk yet.
 
 ### Roadmap
 
 - [ ] Multi-timeframe chart analysis (1m, 5m, 1h)
 - [ ] Float-adjusted holder metrics
 - [ ] Backtesting harness that replays past scans against outcomes
-- [ ] Browser tests for the scan flow and SSE handling
 - [ ] Recorded fixtures so the full pipeline runs offline
-- [ ] A license file
 
 ### Out of scope
 
