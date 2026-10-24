@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* One dark terminal. Signal colours mean verdicts only: mint = enter, coral = pass, amber = hold. */
+:root {
+  --background: #07080a;
+  --foreground: #e9ecf1;
+  --card: #0d0f13;
+  --card-foreground: #e9ecf1;
+  --popover: #12151b;
+  --popover-foreground: #e9ecf1;
+  --primary: #e9ecf1;
+  --primary-foreground: #07080a;
+  --secondary: #151920;
+  --secondary-foreground: #e9ecf1;
+  --muted: #11141a;
+  --muted-foreground: #7c8594;
+  --accent: #5ce1ff;
+  --accent-foreground: #07080a;
+  --destructive: #ff4d6d;
+  --border: #1d232d;
+  --input: #1d232d;
+  --ring: #5ce1ff;
+  --ape: #2ee59d;
+  --reject: #ff4d6d;
+  --wait: #ffb020;
+  --radius: 0.75rem;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ape: var(--ape);
+  --color-reject: var(--reject);
+  --color-wait: var(--wait);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-display: "Unbounded", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(60% 40% at 50% -10%, rgb(92 225 255 / 0.10), transparent 70%),
+      radial-gradient(40% 30% at 100% 0%, rgb(46 229 157 / 0.06), transparent 70%);
+    background-attachment: fixed;
+  }
+  button, input { font: inherit; color: inherit; }
+  button:not(:disabled), [role="button"] { cursor: pointer; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
