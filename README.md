@@ -13,6 +13,8 @@
 
 [Quick start](#-quick-start) · [How a scan works](#-how-a-scan-works) · [Decision engine](#-decision-engine) · [API](#-api-reference) · [Architecture](#-architecture) · [Security](#-security-model)
 
+<img src="docs/assets/desk.png" alt="Memecoin Research Desk: paste a contract address to get a guarded verdict" width="900">
+
 </div>
 
 > ⚠️ **Research tool, not financial advice.** Memecoins are extremely high risk and most go to zero. This project never places trades, signs transactions, or touches private keys. Every verdict is one input to your own judgment.
@@ -354,8 +356,6 @@ curl -s -X POST http://127.0.0.1:8765/api/research \
   -d '{"chain": "sol", "address": "<contract-address>"}'
 ```
 
-The result object contains `verdict`, `verdict_reason`, `score`, `reasons`, `risks`, `missing`, `agent`, `signals` (token, security, holders, kline, smart money, KOL), and `sources` (each call's status and latency).
-
 ---
 
 ## 🎮 Progression layer
@@ -451,7 +451,6 @@ memecoin-cinema/
 - **Guards live in code, not in the prompt.** A model can be argued into `APE`. A conditional cannot. Hard stops are deterministic and tested.
 - **The model sees facts, not raw dumps.** Signals are computed first and capped at 12,000 characters.
 - **Browser storage is cosmetic only.** Progress and the intro flag are conveniences. Anything that matters comes from the server, and storage failures never break the page.
-- **Stream, don't wait.** Each source appears when it lands, so a slow scan still shows progress.
 - **Free-tier default model.** Keeps cost low. Verdicts can vary, so the guards carry the hard cases and the parser rejects malformed output.
 
 ---
