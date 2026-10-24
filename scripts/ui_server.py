@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Local control panel for the research scripts. Listens on 127.0.0.1 only.
+"""Local control panel for the research scripts. Listens on 127.0.0.1 by default.
 
-Run: python3 scripts/ui_server.py [--port 8765]   then open http://127.0.0.1:8765
+Run: python3 scripts/ui_server.py [--port 8765] [--host 127.0.0.1]   then open http://127.0.0.1:8765
+Containers pass --host 0.0.0.0; the Host header check still limits requests to loopback names.
 """
 import argparse, json, mimetypes, subprocess, sys, traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -178,8 +179,9 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--port', type=int, default=8765)
+    p.add_argument('--host', default='127.0.0.1')
     args = p.parse_args()
-    srv = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
+    srv = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f'Research console: http://127.0.0.1:{args.port}  (Ctrl+C to stop)')
     try:
         srv.serve_forever()
