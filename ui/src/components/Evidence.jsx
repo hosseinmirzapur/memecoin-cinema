@@ -30,8 +30,8 @@ const panel = {
 
 function Panel({ title, note, children, className }) {
   return (
-    <motion.div variants={panel} whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }} className={cn('min-w-0', className)}>
-      <Card className="h-full transition-colors hover:border-muted-foreground/30">
+    <motion.div variants={panel} className={cn('min-w-0', className)}>
+      <Card className="h-full">
         <CardHeader className="flex-row items-baseline justify-between gap-3">
           <CardTitle>{title}</CardTitle>
           {note && <CardDescription className="text-right font-mono text-[11px]">{note}</CardDescription>}
