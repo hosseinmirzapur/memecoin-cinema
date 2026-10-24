@@ -1,0 +1,24 @@
+# VCS and local tooling
+.git
+.gitignore
+.dockerignore
+.claude/settings.local.json
+
+# Secrets: never enter the build context
+.env
+.env.*
+**/*.pem
+**/*.key
+
+# Python caches
+**/__pycache__
+**/*.pyc
+
+# Node build inputs and outputs (rebuilt inside the image)
+ui/node_modules
+ui/dist
+
+# Offline-only material, not needed at runtime
+transcripts
+docs
+scripts/blender
