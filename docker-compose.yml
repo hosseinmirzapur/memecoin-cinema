@@ -1,0 +1,52 @@
+# Memecoin Cinema: local deployment of the research desk.
+#
+#   docker compose up -d --build   build and start      -> http://127.0.0.1:8765
+#   docker compose logs -f desk    follow logs
+#   docker compose down            stop and remove
+#
+# Secrets are never baked into the image. They come from:
+#   .env                       KILO_API_KEY (optional), read at start-up
+#   ~/.config/gmgn/.env        GMGN_API_KEY + GMGN_PRIVATE_KEY, mounted read-only
+
+name: memecoin-cinema
+
+services:
+  desk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: memecoin-cinema:latest
+    container_name: memecoin-cinema
+    init: true                       # reaps child gmgn-cli processes, forwards signals
+    restart: unless-stopped
+
+    ports:
+      # Loopback only: the desk is reachable from this machine, never from the LAN.
+      - "127.0.0.1:${DESK_PORT:-8765}:8765"
+
+    env_file:
+      - path: .env
+        required: false
+
+    volumes:
+      - type: bind
+        source: ${GMGN_CONFIG_DIR:-${HOME}/.config/gmgn}
+        target: /home/node/.config/gmgn
+        read_only: true
+
+    # Hardened runtime: nothing in the image is writable, no Linux capabilities.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

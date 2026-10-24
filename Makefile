@@ -2,15 +2,19 @@ PY ?= python3
 PORT ?= 8765
 
 .DEFAULT_GOAL := help
-.PHONY: help ui ui-build assets test check config
+.PHONY: help ui ui-build assets test check config docker-build docker-up docker-down docker-logs
 
 help:
-	@echo "make ui       build the React app, then start the desk at http://127.0.0.1:$(PORT)"
-	@echo "make ui-build build the React app only (installs npm deps on first run)"
-	@echo "make assets   rebuild the Blender relic models in ui/public/models (needs blender on PATH)"
-	@echo "make test     run unit tests"
-	@echo "make check    compile scripts, then run tests"
-	@echo "make config   show gmgn-cli config check"
+	@echo "make ui           build the React app, then start the desk at http://127.0.0.1:$(PORT)"
+	@echo "make ui-build     build the React app only (installs npm deps on first run)"
+	@echo "make assets       rebuild the Blender relic models in ui/public/models (needs blender on PATH)"
+	@echo "make test         run unit tests"
+	@echo "make check        compile scripts, then run tests"
+	@echo "make config       show gmgn-cli config check"
+	@echo "make docker-build build the container image"
+	@echo "make docker-up    build if needed, start the desk in Docker on 127.0.0.1:8765"
+	@echo "make docker-down  stop and remove the Docker deployment"
+	@echo "make docker-logs  follow the container logs"
 
 ui/node_modules: ui/package.json
 	cd ui && npm install --no-audit --no-fund
@@ -34,3 +38,15 @@ check:
 
 config:
 	gmgn-cli config --check
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up -d --build
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f desk
